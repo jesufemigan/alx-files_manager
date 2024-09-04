@@ -1,13 +1,36 @@
-class AuthControllers {
-    static getConnect(req, res) {
-        const { email, password } = req.body;
-        res.header.authorization = `${email}:${password}`;
+import { getBasicAuth, authenticateUser, deleteSessionToken, getSessionToken } from "../utils/auth";
 
-        if (!email || !password) {
+class AuthControllers {
+    static async getConnect(req, res) {
+        const { email, password } = getBasicAuth(req);
+
+        const user = authenticateUser(email);
+        if (!email || !password || !user) {
             return res.status(401).json({
                 error: 'Unauthorized'
             })
         }
+
+        const token = await generateSessionAuth(user._id);
+        return res.status(200).json(token);
+    }
+
+    static async getDisconnect(req, res) {
+        const token = getSessionToken(req);
+
+        if (!token) {
+            return res.status(401).json({
+                error: 'Unauthorized',
+            });
+        }
+
+        const result = await deleteSessionToken(token);
+        if (!result) {
+            return res.status(401).json({
+                error: 'Unauthorized'
+            });
+        }
+        return res.sendStatus(204);
     }
 }
 

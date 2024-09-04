@@ -1,4 +1,5 @@
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
+import sha1 from "sha1"
 
 const HOST = process.env.DB_HOST || 'localhost';
 const PORT = process.env.DB_PORT || 27017;
@@ -28,6 +29,29 @@ class DBClient {
 
     async nbFiles() {
         return this.db.collection('files').countDocuments();
+    }
+
+    filesCollection() {
+        return this.db.collection('files');
+    }
+
+    findUserByEmail(email) {
+        return this.db.collection('users').findOne({ email })
+    }
+
+    findUserById(userId) {
+        return this.db.collection('users').findOne({ _id: ObjectId(userId) });
+    }
+
+    async addUser(email, password) {
+        const result = await this.db.collection('users').insertOne({
+            email,
+            password: sha1(password)
+        })
+        return {
+            email: result.ops[0].email,
+            id: result.ops[0]._id
+        }
     }
 }
 
